@@ -78,7 +78,3 @@ class FilterModel:
             return self.clf.predict_proba(word_vector)
         except AttributeError:
             return self.clf.predict(word_vector)
-
-
-
-

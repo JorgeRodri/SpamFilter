@@ -6,7 +6,7 @@ from flask import request
 from io import open
 from nltk.corpus import stopwords
 import os, multiprocessing, pymysql, datetime, sys, pickle
-from Filter.html import body
+from MySQL.html import body
 from Filter.Utils import parallel_optimizer, ImmutableMultiDict_transform, load_download, load_data, normalize_text
 import numpy as np
 import pandas as pd
@@ -105,6 +105,12 @@ def predict():
         return '%d' % SpamFilter.clf.predict(SpamFilter.f.transform([string]))[0]
     except:
         return str(sys.exc_info())
+
+
+@app.route('/test')
+def test():
+    m = metrics.confusion_matrix(SpamFilter.y_test, SpamFilter.clf.predict(SpamFilter.X_test))
+    return body.format(m[0, 0], m[0, 1], m[1, 0], m[1, 1])
 
 
 @app.route('/params')

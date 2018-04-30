@@ -9,6 +9,7 @@ import os
 from io import open
 from bson import json_util
 from string import punctuation
+import pymysql
 # from main import SpamFilter
 import multiprocessing
 
@@ -34,12 +35,16 @@ def normalize_text(text):
     return norm_text
 
 
-def load_model(classifier):
+def load_model(classifier, nip=None):
     if type(classifier) == str:
         model = joblib.load(classifier)
     elif type(classifier) == abc.ABCMeta:
         model = classifier
     elif type(classifier) == svm.SVC:
+        model = classifier
+    elif classifier is None:
+        raise AttributeError
+    elif type(classifier) is nip:
         model = classifier
     else:
         raise AttributeError
@@ -50,15 +55,38 @@ def load_download(label, connection_credentials_files, last_update):
     d = {'spam': 1, 'nospam': 0}
     with open(connection_credentials_files, 'r') as f:
         connection_credentials = json_util.loads(f.read())
-    connection = getConnection(connection_credentials)
-    query = 'SELECT * FROM ivoox.{0}audio WHERE {0}audio_insertdate > "{1}"'
-    df = pd.read_sql(query.format(label, last_update), connection)
-    df = df[['spamaudio_description', 'spamaudio_duration', 'spamaudio_fksubcategory',
-             'spamaudio_fkaudio', 'spamaudio_title', 'spamaudio_insertdate']]
-    df.columns = ['audio_description', 'audio_duration', 'audio_fksubcategory',
-                  'audio_fkaudio', 'audio_title', 'insertdate']
-    df['label'] = d[label]
-    return df
+    try:
+        connection = getConnection(connection_credentials)
+        query = 'SELECT * FROM ivoox.{0}audio WHERE {0}audio_insertdate > "{1}"'
+        df = pd.read_sql(query.format(label, last_update), connection)
+        df = df[['spamaudio_description', 'spamaudio_duration', 'spamaudio_fksubcategory',
+                 'spamaudio_fkaudio', 'spamaudio_title', 'spamaudio_insertdate']]
+        df.columns = ['audio_description', 'audio_duration', 'audio_fksubcategory',
+                      'audio_fkaudio', 'audio_title', 'insertdate']
+        df['label'] = d[label]
+        return df
+    except pymysql.DataError as e:
+        print("DataError")
+        print(e)
+    except pymysql.InternalError as e:
+        print("InternalError")
+        print(e)
+    except pymysql.IntegrityError as e:
+        print("IntegrityError")
+        print(e)
+    except pymysql.OperationalError as e:
+        print("OperationalError")
+        print(e)
+    except pymysql.NotSupportedError as e:
+        print("NotSupportedError")
+        print(e)
+    except pymysql.ProgrammingError as e:
+        print("ProgrammingError")
+        print(e)
+    except Exception as e:
+        print(e)
+        print("Unknown error occurred")
+    return pd.DataFrame()
 
 
 def load_spam(file_name):
@@ -158,3 +186,17 @@ def ImmutableMultiDict_transform(d):
                 d_dict[k] = v
     return d_dict
 
+
+def clean_data(data):
+    data['audio_description'] = data['audio_description'].apply(lambda x: x.replace('\n', ''))
+    data['audio_description'] = data['audio_description'].apply(lambda x: x.replace('\r', ''))
+    data['audio_description'] = data['audio_description'].apply(lambda x: x.replace('\t', ''))
+    data['audio_description'] = data['audio_description'].apply(lambda x: x.replace('*', ''))
+    data['audio_description'] = data['audio_description'].apply(normalize_text)
+
+    data['audio_title'] = data['audio_title'].apply(lambda x: x.replace('\n', ''))
+    data['audio_title'] = data['audio_title'].apply(lambda x: x.replace('\r', ''))
+    data['audio_title'] = data['audio_title'].apply(lambda x: x.replace('\t', ''))
+    data['audio_title'] = data['audio_title'].apply(lambda x: x.replace('*', ''))
+    data['audio_title'] = data['audio_title'].apply(normalize_text)
+    return data
