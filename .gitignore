@@ -101,6 +101,7 @@ ENV/
 #some files
 model_data/*
 data/*
+TFlogs/
 *.pkl
 credenciales.txt
 *.jblb
