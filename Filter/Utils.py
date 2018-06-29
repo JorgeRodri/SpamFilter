@@ -27,8 +27,8 @@ def normalize_text(text):
     norm_text = norm_text.replace('<br />', '')
     # Pad punctuation with spaces on both sides
     non_words = list(punctuation)
-    non_words = ['*']
-    non_words.extend([u'¿', u'¡'])
+    non_words.extend([u'¿', u'¡', u'º', u'ª'
+                      ])
     non_words.extend(map(str, range(10)))
     non_words.extend(['\n', '\r', '\t'])
     norm_text = un_punctuate(norm_text, non_words)
@@ -191,12 +191,10 @@ def clean_data(data):
     data['audio_description'] = data['audio_description'].apply(lambda x: x.replace('\n', ''))
     data['audio_description'] = data['audio_description'].apply(lambda x: x.replace('\r', ''))
     data['audio_description'] = data['audio_description'].apply(lambda x: x.replace('\t', ''))
-    data['audio_description'] = data['audio_description'].apply(lambda x: x.replace('*', ''))
     data['audio_description'] = data['audio_description'].apply(normalize_text)
 
     data['audio_title'] = data['audio_title'].apply(lambda x: x.replace('\n', ''))
     data['audio_title'] = data['audio_title'].apply(lambda x: x.replace('\r', ''))
     data['audio_title'] = data['audio_title'].apply(lambda x: x.replace('\t', ''))
-    data['audio_title'] = data['audio_title'].apply(lambda x: x.replace('*', ''))
     data['audio_title'] = data['audio_title'].apply(normalize_text)
     return data

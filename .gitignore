@@ -84,6 +84,7 @@ celerybeat-schedule
 env/
 venv/
 ENV/
+venvKeras/
 
 # Spyder project settings
 .spyderproject
@@ -107,3 +108,6 @@ credenciales.txt
 *.jblb
 new_audio.txt
 MySQL/credenciales.txt
+**.png
+**.json
+
